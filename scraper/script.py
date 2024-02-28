@@ -1,3 +1,38 @@
+# Web Scraper para trackear el resultado de la lotería miloto
+# Importación de librerías necesarias para crear el Web Scraper
+from bs4 import BeautifulSoup
+import pandas
+import pyarrow
+import requests
+import sys
+import time
+import openpyxl
+import math
+
+def guardar_en_excel():
+	# Convertir la lista de balotas en columnas:
+
+	new_data = []
+
+	for _ in range(len(data)):
+		sorteo_to_list = {
+			"sorteo": data["sorteo"][_],
+			"balota_1": data["balotas"][_][0],
+			"balota_2": data["balotas"][_][1],
+			"balota_3": data["balotas"][_][2],
+			"balota_4": data["balotas"][_][3],
+			"balota_5": data["balotas"][_][4],
+			"acumulado": data["acumulado"][_],
+			"fecha": data["fecha"][_]
+		}
+
+		new_data.append(sorteo_to_list)
+
+	new_data = pandas.DataFrame(new_data)
+
+	new_data.to_excel("output/sorteos.xlsx")
+
+
 def obtener_numero_sorteos():
 	pagina = requests.get("https://baloto.com/miloto/resultados")
 	soup = BeautifulSoup(pagina.text, 'html.parser')
@@ -14,28 +49,19 @@ def obtener_numero_sorteos():
 
 
 def string_tiempo_empleado(ns):
+
+	m = 0
 	s = ns / 1000000000
 	m = math.floor(s/60)
+	s_restantes = s - m * 60
 
 	if m > 0:
-		en_texto = str(m) + " m, " + str(s) + " s"
+		en_texto = str(m) + " m, " + str(s_restantes) + " s"
 	else:
 		en_texto = str(s) + " s"
 
 	return en_texto
 
-
-# Web Scraper para trackear el resultado de la lotería miloto
-
-# Importación de librerías necesarias para crear el Web Scraper
-from bs4 import BeautifulSoup
-import pandas
-import pyarrow
-import requests
-import sys
-import time
-import openpyxl
-import math
 
 # Variables necesarias
 URLBASE = "https://baloto.com/miloto/resultados-miloto/"
@@ -118,25 +144,36 @@ while on_running:
 	print("3. Todos")
 	print("Cualquier otra tecla para salir.")
 
-	option = int(input("Ingrese la opción (Número): "))
+	try:
+		option = int(input("Ingrese la opción (Número): "))
+
+		if option >= 4 or option <=0:
+			sys.exit(0)
+
+	except ValueError:
+		sys.exit(0)
 
 	if option == 1:
 		print("Creando archivo .CSV...")
 		data.to_csv("output/sorteos.csv")
 		print("Archivo .CSV creado")
 	elif option == 2:
+
+		# Para excel, haremos que cada balota sea una columna
+
 		print("Creando archivo de excel...")
-		data.to_excel("output/sorteos.xlsx")
+
+		guardar_en_excel()
+
 		print("Archivo de excel creado")
 	elif option == 3:
 		print("Creando archivo .CSV...")
 		data.to_csv("output/sorteos.csv")
 		print("Archivo .CSV creado")
 		print("Creando archivo de excel...")
-		data.to_excel("output/sorteos.xlsx")
+		guardar_en_excel()
 		print("Archivo de excel creado")
 	else:
 		sys.exit(0)
-
 
 	print("-----------------------------------------")
